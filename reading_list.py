@@ -1,43 +1,34 @@
 """A program that can store and display books from a user's reading list
 mini-project from Teclado"""
 
-import csv
 import os
+import json
 
 
-def add_book():  # Take information about books / verify if books.csv, create it if not
-    # put books information in the file
+def add_book():  # Take information about books and puts them in books.json file
+    books = load_books()
+
     book_title = input("Book title :    ").strip().title()
     author_name = input("Author's name: ").strip().title()
     year_of_publication = int(input("Publication's year:    ").strip())
-    status = "Unread"
 
-    fieldnames = ['Title', 'Author', 'Year', 'Status']
+    books.append({
+        'Title': book_title,
+        'Author': author_name,
+        'Year': year_of_publication,
+        'Status': "Unread"
+    })
 
-    if os.path.isfile('./books.csv'):
-        with open('books.csv', 'a') as books_store:
-            writer = csv.DictWriter(books_store, delimiter=',', fieldnames=fieldnames)
-            writer.writerow(dict(Title=book_title, Author=author_name, Year=year_of_publication, Status=status))
-    else:
-        with open('books.csv', 'w') as books_store:
-            writer = csv.DictWriter(books_store, delimiter=',', fieldnames=fieldnames)
-
-            writer.writeheader()
-            writer.writerow(dict(Title=book_title, Author=author_name, Year=year_of_publication, Status=status))
+    with open('books.json', 'w') as books_store:
+        json.dump(books, books_store)
 
     print("\n... your book is added\n")
 
 
-def load_books():  # load all books.csv file in our code
-    books = []
+def load_books():  # load all books.json file in our code
 
-    with open('books.csv') as books_store:
-        reader = csv.DictReader(books_store, delimiter=',', skipinitialspace=True)
-
-        for row in reader:
-            books.append(row)
-
-    return books
+    with open('books.json') as books_store:
+        return json.load(books_store)
 
 
 def find_books():  # find a book by the title put by the user
@@ -62,21 +53,15 @@ def mark_book(matching_books, books):  # mark as read the book which title match
     books[index]['Status'] = 'read'
 
 
-def update_books_store(operation):  # Update the file book.csv after modification by the user
+def update_books_store(operation):  # Update the file book.json after modification by the user
     matching_books = find_books()
     books = load_books()
 
     if matching_books:
         operation(matching_books[0], books)
 
-        with open('books.csv', mode='w') as books_store:
-            writer = csv.DictWriter(books_store, delimiter=',', fieldnames=['Title', 'Author', 'Year', 'Status'])
-
-            writer.writeheader()
-
-            for book in books:
-                writer.writerow(
-                    {'Title': book['Title'], 'Author': book['Author'], 'Year': book['Year'], 'Status': book['Status']})
+        with open('books.json', mode='w') as books_store:
+            json.dump(books, books_store)
     else:
         print("Sorry, we didn't find any books for that search term.")
 
@@ -99,6 +84,10 @@ menu = ("Please choose an operation\n"
         "E: end the program\n")
 
 user_choice = input(menu).strip().upper()[0]
+
+if os.path.isfile('./books.json') is False:  # Create a books.json file if it doesn't exist
+    with open('./books.json', 'x') as books_store:
+        json.dump([], books_store)
 
 while user_choice != 'E':
     if user_choice == 'A':
